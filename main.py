@@ -53,21 +53,36 @@ class Window(QMainWindow):
 
     """open shift button action"""
     def open_shift_clicked(self):
+
         if con_class.is_last_shift_opened(client_bearer):
             logging.warning(f"{datetime.now()} Зміну не закрито! \n")
             print("Зміну не закрито!")
         else:
+            self.check_ping_tax()
             result = con_class.open_shift()
             print(f"-----{result['status']}-----")
             logging.info(f"{datetime.now()} Open shift: {result} \n\n")
 
+    def check_ping_tax(self):
+        ping_tax = con_class.ping_tax_service(x_license_key)
+        if ping_tax["status"] != "DONE":
+            logging.critical(f"{datetime.now()} Статус офлайн!")
+            print("Offline")
+        else:
+            logging.info(f"{datetime.now()} Система онлайн.")
+            print("Online")
 
     """close shift button action"""
     def close_shift_clicked(self):
-        result = con_class.close_shift()
-        print(f"-----{result['status']}-----")
-        logging.info(f"{datetime.now()} Close shift: {result} \n\n")
-        #print(result)
+        if con_class.is_last_shift_opened(client_bearer):
+            self.check_ping_tax()
+            result = con_class.close_shift()
+            print(f"-----{result['status']}-----")
+            logging.info(f"{datetime.now()} Close shift: {result} \n\n")
+            #print(result)
+        else:
+            logging.warning(f"{datetime.now()} Зміну не відкрито!")
+            print(f"Зміну не відкрито!")
 
     """send receipt button action"""
     def send_receipt_clicked(self):

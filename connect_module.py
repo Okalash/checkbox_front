@@ -50,6 +50,19 @@ class Connection_mod:
         self.shift_uuid = ""
         self.shift_status = ""
 
+    def ping_tax_service(self, license_key):
+
+        ping_tax_link = "https://api.checkbox.ua/api/v1/cash-registers/ping-tax-service"
+        headers = {
+            "X-Client-Name": self.client_name,
+            "X-Client-Version": self.client_version,
+            "X-License-Key": license_key,
+            "Authorization": f"Bearer {self.bearer}"
+        }
+
+        result = requests.post(ping_tax_link, headers=headers).json()
+        return result
+
     def is_last_shift_opened(self,token):
 
         #get_shifts_link = "https://api.checkbox.ua/api/v1/shifts"
@@ -67,6 +80,7 @@ class Connection_mod:
         else:
             logging.info(f"{datetime.datetime.now()} Зміна у статусі {result['status']} \n")
             return True
+
 
     def check_shift(self):
 
