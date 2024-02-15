@@ -101,7 +101,6 @@ class ReceiptWindow(QWidget):
                         }
         #receipt_class = Receipt()
         result = Receipt.send_receipt(client_bearer, payload)
-        logging
         print("OK")
 
 
