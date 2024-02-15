@@ -1,9 +1,10 @@
 from connect_module import Connection_mod
-from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QPushButton
+from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QPushButton, QVBoxLayout, QLineEdit, QComboBox
 import sys
 from receipt import Receipt
 import logging
 from datetime import datetime
+import uuid
 
 logging.basicConfig(level=logging.INFO, filename="checkbox_log.log",filemode="a")
 
@@ -23,7 +24,95 @@ con_class = Connection_mod(x_license_key, pin_code, client_bearer)
 
 
 
-class Window(QMainWindow):
+class ReceiptWindow(QWidget):
+
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout()
+        self.setWindowTitle("Фіскальний чек")
+        self.resize(800,800)
+
+        self.receipt_uuid = str(uuid.uuid4())
+
+        """Name good"""
+        self.good_name = QLineEdit()
+        self.good_name.setPlaceholderText("Назва товару")
+        self.good_name.textChanged.connect(self.good_name.setText)
+        layout.addWidget(self.good_name)
+
+        """Price good"""
+        self.good_price = QLineEdit()
+        self.good_price.setPlaceholderText("Ціна товару")
+        self.good_price.textChanged.connect(self.good_price.setText)
+        layout.addWidget(self.good_price)
+
+        """Quantity good"""
+        self.good_quantity = QLineEdit()
+        self.good_quantity.setPlaceholderText("Кількість товару")
+        self.good_quantity.textChanged.connect(self.good_quantity.setText)
+        layout.addWidget(self.good_quantity)
+
+        """Value type"""
+        self.type_value = QComboBox()
+        self.type_value.addItems(["Готівка", "Безготівка"])
+        #self.type_value.currentIndexChanged.connect(self.index_changed)
+        #How to save value?
+        layout.addWidget(self.type_value)
+
+        """Sum value"""
+        self.value_sum = QLineEdit()
+        self.value_sum.setPlaceholderText("Сума оплати")
+        self.value_sum.textChanged.connect(self.good_price.setText)
+        layout.addWidget(self.value_sum)
+
+        """Button to check"""
+        self.button_to_pay = QPushButton("Оплата")
+        self.button_to_pay.clicked.connect(self.button_to_pay_action)
+        layout.addWidget(self.button_to_pay)
+
+        self.setLayout(layout)
+
+    def button_to_pay_action(self):
+        good_code = 1
+        good_name = self.good_name.text()
+        good_price = int(self.good_price.text())
+        good_quanity = int(self.good_quantity.text())
+        type_value = "CASH"
+        value_sum = int(self.value_sum.text())
+        payload = {"id":self.receipt_uuid,
+                    "goods":[
+                            {
+                                "good": {
+                                    "code":good_code,
+                                    "name":good_name,
+                                    "price":good_price,
+                                    "tax":[8]
+                                   },
+                                   "quantity":good_quanity
+                                }
+                            ],
+                            "payments":[
+                                {
+                                    "type":type_value,
+                                    "value":value_sum
+                                }
+                            ],
+                        "footer": "Checkbox_front"
+                        }
+        #receipt_class = Receipt()
+        result = Receipt.send_receipt(client_bearer, payload)
+        logging
+        print("OK")
+
+
+
+
+
+
+
+
+
+class MainWindow(QMainWindow):
     """Main Window."""
 
     def __init__(self, parent=None):
@@ -32,6 +121,7 @@ class Window(QMainWindow):
 
         self.setWindowTitle("Checkbox Front")
         self.resize(800, 800)
+
 
         """open shift button"""
         open_shift_button = QPushButton("Відкрити зміну", self)
@@ -63,6 +153,7 @@ class Window(QMainWindow):
             print(f"-----{result['status']}-----")
             logging.info(f"{datetime.now()} Open shift: {result} \n\n")
 
+    """Check ping tax status(online/offline)"""
     def check_ping_tax(self):
         ping_tax = con_class.ping_tax_service(x_license_key)
         if ping_tax["status"] != "DONE":
@@ -86,15 +177,17 @@ class Window(QMainWindow):
 
     """send receipt button action"""
     def send_receipt_clicked(self):
-        receipt_class = Receipt("Ковбаска домашня", 15000, 1)
-        result = receipt_class.send_receipt(client_bearer)
-        print(("-----{0} id: {1}-----").format(result["transaction"]["status"], result["id"]))
+        self.r_window = ReceiptWindow()
+        self.r_window.show()
+        # receipt_class = Receipt("Ковбаска домашня", 15000, 1)
+        # result = receipt_class.send_receipt(client_bearer)
+        # print(("-----{0} id: {1}-----").format(result["transaction"]["status"], result["id"]))
         #print(result)
 
 
 # app.exec()
 
 
-win = Window()
+win = MainWindow()
 win.show()
 sys.exit(app.exec())
