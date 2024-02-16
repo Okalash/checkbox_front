@@ -6,9 +6,8 @@ from datetime import datetime
 
 logging.basicConfig(level=logging.INFO, filename="checkbox_log.log", filemode="a")
 
-
 class Receipt:
-    '''Why init? omg'''
+
 
     # def __init__(self, goods, price, type_value):
     #     self.receipt_uuid = str(uuid.uuid4())

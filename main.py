@@ -22,7 +22,8 @@ con_class = Connection_mod(x_license_key, pin_code, client_bearer)
 
 #label = QLabel(client_bearer)
 
-
+receipt_class = Receipt()
+receipt_list = []
 
 class ReceiptWindow(QWidget):
 
@@ -62,7 +63,7 @@ class ReceiptWindow(QWidget):
         """Sum value"""
         self.value_sum = QLineEdit()
         self.value_sum.setPlaceholderText("Сума оплати")
-        self.value_sum.textChanged.connect(self.good_price.setText)
+        self.value_sum.textChanged.connect(self.value_sum.setText)
         layout.addWidget(self.value_sum)
 
         """Button to check"""
@@ -99,8 +100,9 @@ class ReceiptWindow(QWidget):
                             ],
                         "footer": "Checkbox_front"
                         }
-        #receipt_class = Receipt()
-        result = Receipt.send_receipt(client_bearer, payload)
+
+        result = receipt_class.send_receipt(client_bearer, payload)
+        receipt_list.append(result)
         print("OK")
 
 
@@ -169,6 +171,7 @@ class MainWindow(QMainWindow):
             result = con_class.close_shift()
             print(f"-----{result['status']}-----")
             logging.info(f"{datetime.now()} Close shift: {result} \n\n")
+            print(receipt_list)
             #print(result)
         else:
             logging.warning(f"{datetime.now()} Зміну не відкрито!")
