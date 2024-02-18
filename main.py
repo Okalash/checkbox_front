@@ -5,6 +5,7 @@ from receipt import Receipt
 import logging
 from datetime import datetime
 import uuid
+import sqlite3
 
 logging.basicConfig(level=logging.INFO, filename="checkbox_log.log",filemode="a")
 
@@ -24,6 +25,24 @@ con_class = Connection_mod(x_license_key, pin_code, client_bearer)
 
 receipt_class = Receipt()
 receipt_list = []
+
+
+"""Create db"""
+connection_db = sqlite3.connect("agent_front.db")
+cursor = connection_db.cursor()
+connection_db.cursor()
+
+"""Create table transaction"""
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS cash_register_transaction(
+ID INTEGER PRIMARY KEY,
+type_transaction TEXT NOT NULL,
+transaction_id TEXT NOT NULL,
+payload TEXT NOT NULL)
+''')
+
+connection_db.commit()
+
 
 class ReceiptWindow(QWidget):
 
@@ -80,6 +99,8 @@ class ReceiptWindow(QWidget):
         good_quanity = int(self.good_quantity.text())
         type_value = "CASH"
         value_sum = int(self.value_sum.text())
+
+        #Filling out the check payload
         payload = {"id":self.receipt_uuid,
                     "goods":[
                             {
@@ -102,6 +123,12 @@ class ReceiptWindow(QWidget):
                         }
 
         result = receipt_class.send_receipt(client_bearer, payload)
+        transaction_id = str(result['id']).lstrip()
+
+        cursor.execute(f'INSERT INTO cash_register_transaction (type_transaction, transaction_id, payload) VALUES (?,?,?)',
+                       ('check',transaction_id, f'{result}'))
+
+        connection_db.commit()
         receipt_list.append(result)
         print("OK")
 
@@ -151,8 +178,13 @@ class MainWindow(QMainWindow):
         else:
             self.check_ping_tax()
             result = con_class.open_shift()
-            print(f"-----{result['status']}-----")
+            transaction_id = str(result['id']).strip()
+            print(f"-----{result['status']}-----\n {transaction_id}")
             logging.info(f"{datetime.now()} Open shift: {result} \n\n")
+            cursor.execute(
+                f'INSERT INTO cash_register_transaction (type_transaction, transaction_id, payload) VALUES (?,?,?)',
+                ('open_shift', transaction_id, f"{result}"))
+            connection_db.commit()
 
     """Check ping tax status(online/offline)"""
     def check_ping_tax(self):
@@ -169,9 +201,14 @@ class MainWindow(QMainWindow):
         if con_class.is_last_shift_opened(client_bearer):
             self.check_ping_tax()
             result = con_class.close_shift()
-            print(f"-----{result['status']}-----")
+            transaction_id = str(result['id']).strip()
+            print(f"-----{result['status']}-----\n {transaction_id}")
             logging.info(f"{datetime.now()} Close shift: {result} \n\n")
-            print(receipt_list)
+            cursor.execute(
+                f'INSERT INTO cash_register_transaction (type_transaction, transaction_id, payload) VALUES (?,?,?)',
+                ('shift_close', transaction_id, f"{result}"))
+            connection_db.commit()
+            connection_db.close()
             #print(result)
         else:
             logging.warning(f"{datetime.now()} Зміну не відкрито!")

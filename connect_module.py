@@ -137,18 +137,4 @@ class Connection_mod:
 
         shift_close_request = requests.post(shift_close_link, json=body, headers=headers)
         return_request = shift_close_request.json()
-
-        if return_request:
-            #print(return_request["status"])
-            return return_request
-        else:
-            raise Exception(f"Shift is already closed")
-        # if self.check_shift(bearer)["status"] == 'OPENED':
-        #     shift_close_request = requests.post(shift_close_link, json=body, headers=headers)
-        #
-        #     return_request = shift_close_request.json()
-        #
-        #     return return_request
-        # else:
-        #     #raise Exception(f"Shift is closed")
-        #     print(f"Shift is already closed")
+        return return_request
